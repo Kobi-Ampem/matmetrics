@@ -1,0 +1,66 @@
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --ink: #0f1419;
+  --ink-2: #4a5260;
+  --ink-3: #6f7682;
+  --line: #e4e5e1;
+  --line-strong: #cfd1cc;
+  --hover: #efefec;
+
+  --accent: #1d4ed8;
+  --accent-hover: #1a44bf;
+  --accent-press: #173aa3;
+  --accent-soft: #e8eefc;
+
+  --night: #0b0e13;
+  --night-2: #151a22;
+  --night-line: #252c38;
+  --night-ink: #e6e8ec;
+  --night-ink-2: #9aa3b2;
+
+  --risk-high: #d92d20;
+  --risk-high-bg: #fdecea;
+  --risk-med: #c77700;
+  --risk-med-bg: #fff4e0;
+  --risk-low: #5b6472;
+  --risk-low-bg: #eef0f2;
+  --ok: #12805c;
+  --ok-bg: #e6f4ee;
+
+  --pose-a: #7fa6ff;
+  --pose-b: #e6e8ec;
+
+  --thermal-cool: #9db4d3;
+  --thermal-warm: #e8a317;
+  --thermal-hot: #d92d20;
+
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-head: "Space Grotesk", "Inter", sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+  --fs-3xl: 48px;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --sidebar-w: 232px;
+  --topbar-h: 64px;
+  --content-max: 1360px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 160ms;
+}

@@ -1,0 +1,33 @@
+.wrap {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 99px;
+  background: var(--ok);
+  flex: none;
+}
+
+.title {
+  font-size: 13px;
+  color: var(--night-ink);
+}
+
+.detail {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--night-ink-2);
+  line-height: 1.4;
+}
+
+@media (max-width: 1023px) {
+  .title,
+  .detail {
+    display: none;
+  }
+}

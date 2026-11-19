@@ -1,0 +1,110 @@
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--night);
+  border: 1px solid var(--night-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--night-ink);
+  text-align: left;
+  padding: 0;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.frame:hover {
+  border-color: #3a4352;
+}
+
+.flagged,
+.flagged:hover {
+  border-color: var(--risk-high);
+}
+
+.strip {
+  aspect-ratio: 16 / 7;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 33.33% 33.33%;
+}
+
+.top {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  z-index: 1;
+}
+
+.rec {
+  display: inline-flex;
+  align-items: center;
+  color: var(--night-ink-2);
+}
+
+.rec::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 99px;
+  background: var(--risk-high);
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pose {
+  position: absolute;
+  inset: 12% 6% 8%;
+}
+
+.box {
+  position: absolute;
+  left: 18%;
+  top: 22%;
+  width: 34%;
+  height: 52%;
+  border: 1px solid var(--risk-high);
+  background: rgba(217, 45, 32, 0.06);
+  color: var(--risk-high);
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 4px 6px;
+}
+
+.warn {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  color: var(--risk-med);
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.strip .top {
+  top: 6px;
+  left: 8px;
+  right: 8px;
+  font-size: 10px;
+}

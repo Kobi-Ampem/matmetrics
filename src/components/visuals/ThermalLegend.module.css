@@ -1,0 +1,19 @@
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.bar {
+  width: 120px;
+  height: 8px;
+  background: linear-gradient(90deg, var(--thermal-cool), var(--thermal-warm), var(--thermal-hot));
+}
+
+.cap {
+  color: var(--ink-3);
+  font-size: 12px;
+  max-width: 220px;
+}

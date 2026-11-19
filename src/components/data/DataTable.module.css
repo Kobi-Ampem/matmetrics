@@ -1,0 +1,111 @@
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.table th button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  text-align: inherit;
+  transition: color var(--dur) var(--ease);
+}
+
+.table th button:disabled {
+  cursor: default;
+}
+
+.sortable button:hover {
+  color: var(--ink);
+}
+
+.sorted button {
+  color: var(--ink);
+}
+
+.arrow {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.sortable button:hover .arrow,
+.sorted .arrow {
+  opacity: 1;
+}
+
+.table td {
+  height: 52px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 0;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
+}
+
+.dense td {
+  height: 40px;
+}
+
+.click {
+  cursor: pointer;
+}
+
+.click td {
+  transition: background-color var(--dur) var(--ease);
+}
+
+.click:hover td {
+  background: var(--hover);
+}
+
+.num {
+  text-align: right;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th.num button {
+  flex-direction: row-reverse;
+}
+
+.empty {
+  color: var(--ink-3);
+  height: 96px;
+  text-align: center;
+}

@@ -1,0 +1,64 @@
+import type { PoseFrame } from "../../types"
+import { theme } from "../../styles/theme"
+
+const LINKS: [number, number][] = [
+  [5, 6],
+  [5, 7],
+  [7, 9],
+  [6, 8],
+  [8, 10],
+  [5, 11],
+  [6, 12],
+  [11, 12],
+  [11, 13],
+  [13, 15],
+  [12, 14],
+  [14, 16],
+]
+
+function Figure({ points, color, hot }: { points: [number, number][]; color: string; hot: boolean }) {
+  const nose = points[0] ?? [0, 0]
+  return (
+    <g>
+      {LINKS.map(([a, b]) => {
+        const p = points[a]
+        const q = points[b]
+        if (!p || !q) return null
+        return (
+          <line
+            key={`${a}-${b}`}
+            x1={p[0]}
+            y1={p[1]}
+            x2={q[0]}
+            y2={q[1]}
+            stroke={hot ? theme.riskHigh : color}
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+        )
+      })}
+      <circle cx={nose[0]} cy={nose[1]} r={10} fill="none" stroke={hot ? theme.riskHigh : color} strokeWidth={2} />
+      {points.map((point, index) => (
+        <circle key={index} cx={point[0]} cy={point[1]} r={2.5} fill={hot ? theme.riskHigh : color} />
+      ))}
+    </g>
+  )
+}
+
+export function lerpPose(from: PoseFrame, to: PoseFrame, t: number): PoseFrame {
+  const mix = (a: [number, number][], b: [number, number][]) =>
+    a.map((point, index) => {
+      const other = b[index] ?? point
+      return [point[0] + (other[0] - point[0]) * t, point[1] + (other[1] - point[1]) * t] as [number, number]
+    })
+  return { a: mix(from.a, to.a), b: mix(from.b, to.b) }
+}
+
+export function PoseSkeleton({ frame, highlight }: { frame: PoseFrame; highlight?: "a" | "b" }) {
+  return (
+    <svg viewBox="0 0 320 180" className="pose" aria-hidden="true" width="100%" height="100%">
+      <Figure points={frame.b} color={theme.poseB} hot={highlight === "b"} />
+      <Figure points={frame.a} color={theme.poseA} hot={highlight === "a"} />
+    </svg>
+  )
+}

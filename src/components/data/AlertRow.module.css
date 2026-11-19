@@ -1,0 +1,112 @@
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 12px 12px 12px 14px;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid var(--risk-low);
+  animation: fade 200ms var(--ease);
+  transition:
+    background-color var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.light:hover {
+  background: var(--hover);
+}
+
+.dark {
+  border-bottom-color: var(--night-line);
+  color: var(--night-ink);
+}
+
+.dark:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.high {
+  border-left-color: var(--risk-high);
+}
+
+.med {
+  border-left-color: var(--risk-med);
+}
+
+.low {
+  border-left-color: var(--risk-low);
+}
+
+.positive {
+  border-left-color: var(--ok);
+}
+
+.seen {
+  opacity: 0.45;
+}
+
+.meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.dark .meta {
+  color: var(--night-ink-2);
+}
+
+.level {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.high .level {
+  color: var(--risk-high);
+}
+
+.med .level {
+  color: var(--risk-med);
+}
+
+.positive .level {
+  color: var(--ok);
+}
+
+.who {
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.main {
+  min-width: 0;
+}
+
+.main p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.dark .main p {
+  color: var(--night-ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

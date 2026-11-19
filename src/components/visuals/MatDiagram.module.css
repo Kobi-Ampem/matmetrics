@@ -1,0 +1,29 @@
+.mat {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.cam {
+  cursor: pointer;
+}
+
+.cam rect {
+  transition: fill var(--dur) var(--ease);
+}
+
+.cam:hover rect {
+  fill: var(--accent);
+}
+
+.pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 1s ease-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
