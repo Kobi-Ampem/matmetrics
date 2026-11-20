@@ -6,7 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     watch: {
-      ignored: ['**/.agents/**'],
+      ignored: ['**/.agents/**', '**/server/**'],
+    },
+    // In `npm run dev`, send API and WebSocket calls to a local edge server if one is running.
+    proxy: {
+      '/api': 'http://localhost:8000',
+      '/ws': { target: 'ws://localhost:8000', ws: true },
     },
   },
 })

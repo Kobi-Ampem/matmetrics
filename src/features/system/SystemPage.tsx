@@ -9,6 +9,7 @@ import { MatDiagram } from "../../components/visuals/MatDiagram"
 import { LineChartPanel } from "../../components/charts/Charts"
 import { mockDb } from "../../data"
 import { useSettings } from "../../state/SettingsContext"
+import { JoinPanel } from "./JoinPanel"
 import type { Device } from "../../types"
 import styles from "../common.module.css"
 
@@ -60,6 +61,8 @@ export function SystemPage() {
           </div>
           <StatusTag level="ok">All core devices online</StatusTag>
         </div>
+
+        <JoinPanel />
 
         <section className={styles.systemTop}>
           <div>
