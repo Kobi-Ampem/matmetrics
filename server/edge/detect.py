@@ -95,7 +95,8 @@ class CameraDetector:
     def __init__(self) -> None:
         self.people: list[PersonTrack] = [PersonTrack(), PersonTrack()]
 
-    def update(self, t: float, people: list[list[Point]]) -> list[Candidate]:
+    def update(self, t: float, people: list[list[Point]], report: bool = True) -> list[Candidate]:
+        """Add one frame. With `report` off, only remember positions (no alerts, no cooldown)."""
         found: list[Candidate] = []
         for index, points in enumerate(people[:2]):
             if len(points) != 17:
@@ -113,7 +114,7 @@ class CameraDetector:
             track.history.append(_Sample(t, hip[1], torso))
             while track.history and t - track.history[0].t > WINDOW_SEC:
                 track.history.popleft()
-            if t - track.last_alert < COOLDOWN_SEC:
+            if not report or t - track.last_alert < COOLDOWN_SEC:
                 continue
 
             # Compare with the highest hip position in the last second, scaled by the torso

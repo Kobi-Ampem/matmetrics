@@ -80,13 +80,30 @@ def test_unseen_body_is_ignored():
     assert fall(CameraDetector(), hidden) == []
 
 
-def test_two_cameras_merge_into_one_alert():
-    room = CameraRoom(LiveClock())
+def real_room():
+    clock = LiveClock()
+    clock.set_camera_mode("real")
+    return CameraRoom(clock)
+
+
+def stage_fall(room, cam, pose, start, offset=0.0):
+    """Stand for a second, then fall to `pose`, sending frames to one camera of the room."""
+    found = []
     for i in range(6):
-        room.frame("cam2", [STANDING], now=i * 0.2)
-        room.frame("cam3", [STANDING], now=i * 0.2 + 0.05)
-    first = room.frame("cam2", [HEAD_DOWN], now=1.5)
-    second = room.frame("cam3", [HEAD_DOWN], now=1.55)
+        found += room.frame(cam, [STANDING], now=start + i * 0.2 + offset)
+    for i in range(1, 5):
+        found += room.frame(
+            cam, [between(STANDING, pose, i / 4)], now=start + 1.0 + i * 0.12 + offset
+        )
+    return found
+
+
+def test_two_cameras_merge_into_one_alert():
+    room = real_room()
+    for cam, offset in (("cam2", 0.0), ("cam3", 0.05)):
+        room.frame(cam, [STANDING], now=offset)  # cameras start, then settle for 3 s
+    first = stage_fall(room, "cam2", HEAD_DOWN, start=2.5)
+    second = stage_fall(room, "cam3", HEAD_DOWN, start=2.5, offset=0.05)
     assert len(room.alerts) == 1
     alert = room.alerts[0]
     assert first[0] is second[0] is alert
@@ -96,6 +113,39 @@ def test_two_cameras_merge_into_one_alert():
     assert alert["clock"] == "19:27:20"  # the demo opens at 57:20 into an 18:30 session
 
 
+def test_no_alerts_while_a_camera_settles():
+    room = real_room()
+    # A fall in the first three seconds after the camera starts is ignored, and does not start
+    # the cooldown, so a real fall straight after still counts.
+    assert stage_fall(room, "cam1", HEAD_DOWN, start=0.0) == []
+    assert len(stage_fall(room, "cam1", HEAD_DOWN, start=2.5)) == 1
+
+
+def test_no_alerts_while_the_phone_moves():
+    room = real_room()
+    for i in range(16):
+        room.frame("cam1", [STANDING], now=i * 0.2)  # started and settled by 3.0
+    # The phone is picked up: no alert, and three more seconds of settling start.
+    assert room.frame("cam1", [HEAD_DOWN], now=3.3, moving=True) == []
+    assert stage_fall(room, "cam1", HEAD_DOWN, start=3.5) == []
+    assert len(stage_fall(room, "cam1", HEAD_DOWN, start=5.5)) == 1
+
+
+def test_no_real_alerts_in_simulated_mode():
+    room = CameraRoom(LiveClock())  # starts in simulated mode
+    room.frame("cam1", [STANDING], now=0.0)
+    assert stage_fall(room, "cam1", HEAD_DOWN, start=2.5) == []
+    assert room.alerts == []
+
+
+def test_late_frames_are_dropped():
+    room = real_room()
+    assert room.accept("cam1", 10)
+    assert room.accept("cam1", 12)
+    assert not room.accept("cam1", 11)  # arrived after 12
+    assert not room.accept("cam1", 12)
+
+
 @pytest.fixture
 def client(tmp_path):
     app = create_app(db_path=tmp_path / "t.db", tick_seconds=0, https_port=8443)
@@ -103,19 +153,34 @@ def client(tmp_path):
         yield test_client
 
 
-def send(client, cam, pose, image=None):
-    return client.post(
-        f"/api/cameras/{cam}/frame",
-        json={"people": [pose], "image": image, "width": 480, "height": 270},
-    )
+SEQ = iter(range(1, 10_000))
 
 
-def test_frame_endpoint_validates(client):
+def send(client, cam, pose, **extra):
+    body = {"people": [pose], "width": 1280, "height": 720, "seq": next(SEQ), "capturedAt": 1.0}
+    return client.post(f"/api/cameras/{cam}/pose", json=body | extra)
+
+
+JPEG = b"\xff\xd8\xff\xe0" + b"0" * 100
+
+
+def test_pose_endpoint_validates(client):
     assert send(client, "cam1", STANDING).status_code == 200
     assert send(client, "cam5", STANDING).status_code == 422
     assert send(client, "cam1", STANDING[:10]).status_code == 422
-    assert send(client, "cam1", STANDING, image="javascript:alert(1)").status_code == 422
     assert client.get("/api/cameras").json()["online"]["cam1"] is True
+
+
+def test_image_endpoint_takes_only_small_jpegs(client):
+    url = "/api/cameras/cam1/image?capturedAt=5"
+    assert client.post(url, content=JPEG).status_code == 200
+    assert client.post(url, content=b"<svg onload=alert(1)>").status_code == 422
+    assert client.post(url, content=b"\xff\xd8" + b"0" * 300_000).status_code == 413
+    assert client.post("/api/cameras/cam1/image", content=JPEG).status_code == 422  # no time
+
+
+def test_server_time(client):
+    assert abs(client.get("/api/time").json()["now"] - __import__("time").time() * 1000) < 5000
 
 
 def test_frames_reach_watchers_only_and_alerts_reach_everyone(client):
@@ -126,13 +191,18 @@ def test_frames_reach_watchers_only_and_alerts_reach_everyone(client):
         # Any request after the opt-in proves the server has read it.
         client.get("/api/health")
 
-        send(client, "cam1", STANDING, image="data:image/jpeg;base64,AAAA")
-        frame = coach.receive_json()
-        assert frame["type"] == "frame" and frame["cam"] == "cam1"
+        send(client, "cam1", STANDING, capturedAt=1000.0)
+        pose = coach.receive_json()
+        assert pose["type"] == "pose" and pose["cam"] == "cam1" and pose["capturedAt"] == 1000.0
+        assert pose["receivedAt"] > 0
+
+        client.post("/api/cameras/cam1/image?capturedAt=1100", content=JPEG)
+        image = coach.receive_json()
+        assert image["type"] == "image" and image["image"].startswith("data:image/jpeg;base64,")
 
         client.post("/api/live/cameras", json={"mode": "real"})
         assert coach.receive_json()["live"]["cameraMode"] == "real"
-        # The phone never got the frame: its next message is the mode change.
+        # The phone never got the pictures: its next message is the mode change.
         assert phone.receive_json()["live"]["cameraMode"] == "real"
 
 

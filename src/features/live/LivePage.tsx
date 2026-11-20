@@ -19,7 +19,7 @@ import { useEdge } from "../../state/EdgeContext"
 import { formatVideoTime } from "../../utils/format"
 import type { Camera, Flag } from "../../types"
 import { poseAt, usePoseClock } from "./poseClock"
-import { RealCameraFrame } from "./RealCameraFrame"
+import { RealCameraFrame, RealCameraStatus } from "./RealCameraFrame"
 import styles from "../common.module.css"
 
 export function LivePage() {
@@ -225,7 +225,7 @@ export function LivePage() {
           </div>
           <div className={styles.latency}>
             <span className={styles.dot} style={{ margin: 0, width: 6, height: 6 }} />
-            Edge unit 30 fps · latency {(state.latencyMs / 1000).toFixed(1)} s
+            {real ? <RealCameraStatus /> : <>Edge unit 30 fps · latency {(state.latencyMs / 1000).toFixed(1)} s</>}
           </div>
         </aside>
       </div>

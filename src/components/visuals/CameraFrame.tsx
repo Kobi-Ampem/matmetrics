@@ -15,6 +15,7 @@ export function CameraFrame({
   media,
   notice,
   box,
+  caption,
 }: {
   camera: Camera
   pose: PoseFrame
@@ -28,6 +29,7 @@ export function CameraFrame({
   media?: ReactNode
   notice?: string
   box?: { left: number; top: number; width: number; height: number }
+  caption?: string
 }) {
   const show = status ?? camera.status
   const label = flag ? `RISK · ${riskLabel(flag)}` : ""
@@ -56,6 +58,7 @@ export function CameraFrame({
       ) : null}
       {show === "warning" ? <span className={styles.warn}>LENS PARTLY BLOCKED</span> : null}
       {notice ? <span className={styles.notice}>{notice}</span> : null}
+      {caption ? <span className={styles.caption}>{caption}</span> : null}
     </button>
   )
 }

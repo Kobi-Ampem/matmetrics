@@ -138,3 +138,19 @@
   font-size: 11px;
   letter-spacing: 0.04em;
 }
+
+.caption {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  color: var(--night-ink-2);
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.strip .caption {
+  left: 8px;
+  bottom: 6px;
+  font-size: 10px;
+}

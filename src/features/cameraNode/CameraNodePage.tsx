@@ -25,7 +25,7 @@ function savedCam(): Camera["id"] {
 export function CameraNodePage() {
   const [cam, setCam] = useState<Camera["id"]>(savedCam)
   const [facing, setFacing] = useState<"environment" | "user">("environment")
-  const { videoRef, status, preview, people, sentFps, edgeOk, start, stop } = useCameraNode()
+  const { videoRef, status, preview, people, stats, edgeOk, start, stop } = useCameraNode()
   const active = status === "loading" || status === "running"
   const camera = mockDb.cameras.find((item) => item.id === cam)
 
@@ -43,11 +43,14 @@ export function CameraNodePage() {
   if (status === "denied") line = "Camera access was blocked. Allow the camera for this site, then start again."
   if (status === "error") line = "The camera or pose model did not start. Check no other app is using the camera."
   if (status === "loading") line = "Starting the camera and the pose model..."
+  let warning = ""
   if (status === "running") {
     line =
       edgeOk === false
         ? "Cannot reach the edge unit. Check this phone is on the club Wi-Fi."
-        : `Sending to edge unit · ${sentFps} fps · ${people} ${people === 1 ? "person" : "people"}`
+        : `Sending · skeleton ${stats.poseFps} fps · video ${stats.imageFps} fps · ${people} ${people === 1 ? "person" : "people"}`
+    if (stats.portrait) warning = "Turn the phone sideways: the coach screen shows a wide picture."
+    else if (stats.moving) warning = "Phone moving. Alerts from this camera pause until it is still."
   }
 
   return (
@@ -100,6 +103,7 @@ export function CameraNodePage() {
       <p className={styles.line} role="status">
         {line}
       </p>
+      {warning ? <p className={styles.warning}>{warning}</p> : null}
       <p className={styles.tip}>
         Place the phone at chest height, a few metres from the mat edge, in landscape, so both wrestlers are fully in
         view. Keep this page open; the screen stays on while it runs.

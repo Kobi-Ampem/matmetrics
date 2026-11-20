@@ -39,13 +39,15 @@ type Message =
   | { type: "live"; live: EdgeLive }
   | { type: "alert"; alert: Flag }
   | {
-      type: "frame"
+      type: "pose"
       cam: Camera["id"]
       people: Keypoint[][]
-      image: string | null
       width: number
       height: number
+      capturedAt: number
+      receivedAt: number
     }
+  | { type: "image"; cam: Camera["id"]; image: string; capturedAt: number; receivedAt: number }
 
 interface EdgeApi {
   status: EdgeStatus
@@ -127,9 +129,10 @@ export function EdgeProvider({ children }: { children: ReactNode }) {
         } else if (message.type === "alert") {
           // The same fall seen by another camera comes again with the same id and one more camera.
           setRealAlerts((current) => [message.alert, ...current.filter((item) => item.id !== message.alert.id)])
+        } else if (message.type === "pose") {
+          cameraFeeds.pushPose(message.cam, message)
         } else {
-          const { cam, people, image, width, height } = message
-          cameraFeeds.push(cam, { people, image, width, height })
+          cameraFeeds.pushImage(message.cam, message)
         }
       }
       socket.onclose = () => {

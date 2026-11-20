@@ -89,3 +89,8 @@
   color: var(--night-ink-2);
   max-width: 60ch;
 }
+
+.warning {
+  font-size: var(--fs-sm);
+  color: var(--risk-med);
+}

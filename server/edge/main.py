@@ -1,15 +1,17 @@
 """FastAPI app: REST for changes, one WebSocket that pushes every change to every screen."""
 
 import asyncio
+import base64
 import contextlib
 import json
 import mimetypes
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi import Path as PathParam
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -71,12 +73,23 @@ class CameraModeIn(BaseModel):
 Person = Annotated[list[tuple[float, float, float]], Field(min_length=17, max_length=17)]
 
 
-class CameraFrameIn(BaseModel):
+class PoseIn(BaseModel):
     people: list[Person] = Field(max_length=2)
-    # A small JPEG as a data URL, or None when the phone sends keypoints only.
-    image: str | None = Field(default=None, max_length=400_000, pattern=r"^data:image/jpeg;base64,")
     width: int = Field(ge=1, le=4096)
     height: int = Field(ge=1, le=4096)
+    # Counts up on each phone, so a late request can be told apart from a new one.
+    seq: int = Field(ge=0)
+    # When the phone took the picture, in milliseconds on the server's clock (see /api/time).
+    capturedAt: float
+    # True while the phone itself is moving (picked up, bumped): no alerts from it then.
+    moving: bool = False
+
+
+MAX_IMAGE_BYTES = 250_000
+
+
+def server_ms() -> float:
+    return time.time() * 1000
 
 
 class Hub:
@@ -228,22 +241,61 @@ def create_app(
     async def cameras() -> dict[str, Any]:
         return {"online": room.status(), "alerts": room.alerts}
 
-    @app.post("/api/cameras/{cam_id}/frame")
-    async def camera_frame(body: CameraFrameIn, cam_id: str = CameraId) -> dict[str, Any]:
-        changed = room.frame(cam_id, [list(person) for person in body.people])
+    @app.get("/api/time")
+    async def server_time() -> dict[str, float]:
+        """Lets each phone work out how far its clock is from the laptop's."""
+        return {"now": server_ms()}
+
+    # Keypoints and pictures travel separately: the keypoints are tiny and drive detection
+    # and the skeleton, so a slow picture upload never holds them up.
+    @app.post("/api/cameras/{cam_id}/pose")
+    async def camera_pose(body: PoseIn, cam_id: str = CameraId) -> dict[str, Any]:
+        if not room.accept(cam_id, body.seq):
+            return {"dropped": True}
+        received = server_ms()
+        changed = room.frame(
+            cam_id,
+            [list(person) for person in body.people],
+            captured=body.capturedAt / 1000,
+            moving=body.moving,
+        )
         await hub.send_watchers(
             {
-                "type": "frame",
+                "type": "pose",
                 "cam": cam_id,
                 "people": body.people,
-                "image": body.image,
                 "width": body.width,
                 "height": body.height,
+                "capturedAt": body.capturedAt,
+                "receivedAt": received,
             }
         )
         for alert in changed:
             await hub.send_all({"type": "alert", "alert": alert})
         return {"alerts": len(changed)}
+
+    @app.post("/api/cameras/{cam_id}/image")
+    async def camera_image(
+        request: Request, cam_id: str = CameraId, captured_at: float = Query(alias="capturedAt")
+    ) -> dict[str, bool]:
+        """The phone's picture as raw JPEG bytes (a third smaller than base64 text)."""
+        if int(request.headers.get("content-length", 0)) > MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="Expected a JPEG under 250 KB")
+        data = await request.body()
+        # JPEG files start with the bytes FF D8; anything else is refused.
+        if len(data) > MAX_IMAGE_BYTES or not data.startswith(b"\xff\xd8"):
+            raise HTTPException(status_code=422, detail="Expected a JPEG under 250 KB")
+        image = "data:image/jpeg;base64," + base64.b64encode(data).decode()
+        await hub.send_watchers(
+            {
+                "type": "image",
+                "cam": cam_id,
+                "image": image,
+                "capturedAt": captured_at,
+                "receivedAt": server_ms(),
+            }
+        )
+        return {"ok": True}
 
     @app.post("/api/live/seen/{alert_id}")
     async def live_seen(alert_id: str = PathParam(max_length=64)) -> dict[str, Any]:

@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { CameraFrame } from "../../components/visuals/CameraFrame"
+import { mockDb } from "../../data"
 import { cameraFeeds, type CameraFeed } from "../../state/cameraFeeds"
 import type { Camera, Flag, PoseFrame } from "../../types"
 import { coverMap, VIEW_H, VIEW_W, type Point } from "../camera/poseMapping"
@@ -52,6 +53,16 @@ function boxAround(points: Point[]) {
   }
 }
 
+function seconds(ms: number): string {
+  return `${(ms / 1000).toFixed(1)} s`
+}
+
+/** Delay from the phone to the edge unit: skeleton first, then the slower picture. */
+function delayCaption(feed: CameraFeed): string {
+  const pose = seconds(feed.poseDelayMs)
+  return feed.imageDelayMs === null ? `delay ${pose}` : `delay ${pose} · video ${seconds(feed.imageDelayMs)}`
+}
+
 export function RealCameraFrame({
   camera,
   flag,
@@ -81,6 +92,24 @@ export function RealCameraFrame({
       media={live && feed.image ? <img src={feed.image} alt="" /> : null}
       notice={live ? undefined : "NO SIGNAL · open /camera on a phone"}
       box={flag ? boxAround(pose[person]) : undefined}
+      caption={live ? delayCaption(feed) : undefined}
     />
+  )
+}
+
+/** The line under the alert stream, with measured numbers instead of the scripted ones. */
+export function RealCameraStatus() {
+  // Re-render whenever any camera sends, and once a second to notice cameras going quiet.
+  useSyncExternalStore(cameraFeeds.subscribe, cameraFeeds.version)
+  const now = useNow(1000)
+  const live = mockDb.cameras
+    .map((camera) => cameraFeeds.get(camera.id))
+    .filter((feed): feed is CameraFeed => feed !== undefined && now - feed.at < STALE_MS)
+  if (live.length === 0) return <>Edge unit · no camera phones sending</>
+  const worst = Math.max(...live.map((feed) => feed.poseDelayMs))
+  return (
+    <>
+      Edge unit · {live.length} of 4 cameras · delay up to {seconds(worst)}
+    </>
   )
 }
