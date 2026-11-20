@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.agents']),
+  globalIgnores(['dist', 'server']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -17,6 +17,14 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+    rules: {
+      // Context files export their provider next to the hook that reads it, the usual React
+      // pattern; hot reload still works for them.
+      'react-refresh/only-export-components': [
+        'error',
+        { allowExportNames: ['useEdge', 'useSettings', 'useLiveSession', 'onMatIds'] },
+      ],
     },
   },
 ])

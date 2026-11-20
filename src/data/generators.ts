@@ -596,7 +596,7 @@ export function vitalsFor(
 
 function hrShape(minute: number, resting: number, max: number, random: () => number): number {
   const span = max - resting
-  let target = resting + span * 0.35
+  let target: number
   if (minute < 15) target = resting + span * (0.25 + minute / 50)
   else if (minute < 40) target = resting + span * 0.5
   else if (minute < 80) {

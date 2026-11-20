@@ -192,16 +192,12 @@ export function LandingPage() {
 
 function Statement() {
   const ref = useRef<HTMLElement>(null)
-  const [count, setCount] = useState(0)
-  const reduced = useRef(false)
+  // With reduced motion the whole statement shows at once instead of filling in on scroll.
+  const [reduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  const [count, setCount] = useState(() => (reduced ? STATEMENT.length : 0))
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)")
-    reduced.current = media.matches
-    if (media.matches) {
-      setCount(STATEMENT.length)
-      return
-    }
+    if (reduced) return
     const el = ref.current
     if (!el) return
     const onScroll = () => {
@@ -213,7 +209,7 @@ function Statement() {
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [reduced])
 
   return (
     <section ref={ref} className={styles.statement} aria-label="What the club gets">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { POSE_LOOP, POSES, type PoseKey } from "../../data/poses"
-import { lerpPose } from "../../components/visuals/PoseSkeleton"
+import { lerpPose } from "../../components/visuals/lerpPose"
 import type { PoseFrame } from "../../types"
 
 export function usePoseClock(active: boolean): number {

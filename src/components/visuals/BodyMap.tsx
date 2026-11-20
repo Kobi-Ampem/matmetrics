@@ -1,6 +1,7 @@
 import type { BodyZone } from "../../types"
 import { theme } from "../../styles/theme"
-import { ThermalLegend, thermalColor } from "./ThermalLegend"
+import { ThermalLegend } from "./ThermalLegend"
+import { thermalColor } from "./thermalColor"
 import styles from "./BodyMap.module.css"
 
 const SHAPES: { zone: BodyZone; front: string; back: string }[] = [

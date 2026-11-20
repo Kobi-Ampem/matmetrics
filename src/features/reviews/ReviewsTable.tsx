@@ -13,7 +13,7 @@ import { formatDate } from "../../utils/format"
 import { highestLevel, isRiskyLanding } from "../../utils/risk"
 import styles from "../common.module.css"
 
-export interface ReviewRow {
+interface ReviewRow {
   key: string
   sessionId: string
   athleteId: string
@@ -28,7 +28,7 @@ export interface ReviewRow {
   level: Flag["level"] | null
 }
 
-export function buildReviewRows(): ReviewRow[] {
+function buildReviewRows(): ReviewRow[] {
   return mockDb.participations
     .map((row) => toRow(row))
     .filter((row): row is ReviewRow => row !== null)
