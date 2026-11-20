@@ -23,7 +23,7 @@ this repository keeps that full history. Kobi Ampem Afriyie extends it here with
 | Part | Stack | What it does |
 |---|---|---|
 | `src/` | React 19, TypeScript, Vite, Recharts | Coach app (dashboard, live session, reviews, athletes, warm-ups, system, privacy), athlete app on four phone frames, and the landing page |
-| `server/` | Python 3.12, FastAPI, SQLite, WebSockets | The edge server: one live session clock and one set of settings shared by every screen in the room |
+| `server/` | Python 3.12, FastAPI, SQLite, WebSockets | The edge server: one live session clock and one set of settings shared by every screen in the room, plus fall detection from four camera phones |
 | `public/MATMETRICS_PROTOTYPE_SPEC.md` | | The build spec for the prototype |
 
 ## Two ways to run it
@@ -46,11 +46,13 @@ uv sync
 uv run matmetrics-edge
 ```
 
-The server prints two addresses:
+The first run downloads the pose model (about 5 MB) into `server/models/`; after that no
+internet is needed. The server prints three addresses:
 
 - **Coach screen:** `http://localhost:8000/coach/live` on the presenting laptop.
-- **Phones on Wi-Fi:** `http://<laptop-ip>:8000/athlete`. The System page also shows this as a QR
+- **Athlete phones:** `http://<laptop-ip>:8000/athlete`. The System page also shows this as a QR
   code that judges can scan.
+- **Camera phones:** `https://<laptop-ip>:8443/camera`, also a QR code on the System page.
 
 Every screen then shares one session. Pausing or speeding up the live session, approving a warm-up
 plan, changing an athlete's privacy toggles or marking an alert as seen shows up on all screens at
@@ -59,6 +61,25 @@ shown for real.
 
 If the server stops, every screen carries on by itself from where it was, and reconnects when the
 server is back. During development, `npm run dev` forwards `/api` and `/ws` to a server on port 8000.
+
+### Real cameras: four phones around the mat
+
+1. Put four phones on tripods around the mat, in landscape, at chest height, a few metres back,
+   so both wrestlers are fully in view.
+2. On each phone, scan the **Use this phone as a camera** QR code on the System page. Browsers
+   only allow the camera on secure (https) pages, so the edge server signs its own certificate:
+   the phone warns once, tap Advanced, then continue.
+3. Pick the phone's position (1 North, 2 East, 3 South, 4 West) and press **Start camera**.
+4. On the coach screen's live page, switch **Simulated** to **Real cameras**.
+
+Each phone runs pose detection itself and sends the keypoints and a small picture to the edge
+server about six times a second. The server looks for fast falls and raises an alert when the
+body lands head first (HIGH, neck landing), on one shoulder (MED) or flat on the back (MED). The
+same fall seen by several cameras becomes one alert listing every camera. The person on the left
+of the picture is shown as Jack Miller, the one on the right as Noah Petit.
+
+These are simple rules, not a trained model. Staged falls in clear view work well; close
+grappling, where two bodies overlap, will confuse them. Switch back to **Simulated** at any time.
 
 ### Before presenting
 
@@ -78,8 +99,11 @@ clears all changes on every screen.
 | PUT | `/api/shared/{sessionId}:{athleteId}` | Share a review with the athlete |
 | POST | `/api/system/calibration`, `/api/system/sync` | System page actions |
 | POST | `/api/live/toggle`, `/speed`, `/end`, `/seen/{alertId}` | Live session controls |
+| POST | `/api/live/cameras` | Switch between simulated and real cameras |
+| POST | `/api/cameras/{camId}/frame` | A camera phone's keypoints and picture |
+| GET | `/api/cameras` | Which camera phones are sending, and real alerts |
 | POST | `/api/demo/reset` | Clear every change and restart the session |
-| GET | `/api/join` | Address and QR code for phones |
+| GET | `/api/join` | Addresses and QR codes for athlete and camera phones |
 | WS | `/ws` | Pushes every change to every screen |
 
 Interactive docs are at `/docs` while the server runs. Tests: `cd server && uv run pytest`.

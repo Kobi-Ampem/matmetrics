@@ -5,7 +5,8 @@ import { TopBar } from "../../components/layout/TopBar"
 import { Button } from "../../components/controls/Button"
 import { Toggle } from "../../components/controls/Toggle"
 import { PoseSkeleton } from "../../components/visuals/PoseSkeleton"
-import { usePoseCamera, type CameraStatus } from "./usePoseCamera"
+import { useEdge } from "../../state/EdgeContext"
+import { CDN_ASSETS, EDGE_ASSETS, usePoseCamera, type CameraStatus } from "./usePoseCamera"
 import styles from "../common.module.css"
 
 const MESSAGES: Record<CameraStatus, string> = {
@@ -18,7 +19,11 @@ const MESSAGES: Record<CameraStatus, string> = {
 }
 
 export default function CameraPage() {
-  const { videoRef, status, frame, people, fps, start, stop } = usePoseCamera()
+  // Served by the edge unit: load the pose model from it, so no internet is needed.
+  const edge = useEdge()
+  const { videoRef, status, frame, people, fps, start, stop } = usePoseCamera(
+    edge.status === "online" ? EDGE_ASSETS : CDN_ASSETS,
+  )
   const [showVideo, setShowVideo] = useState(false)
   const active = status === "loading" || status === "running"
 

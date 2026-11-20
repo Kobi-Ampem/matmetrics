@@ -1,9 +1,15 @@
+.panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: var(--s5) var(--s6);
+  padding-bottom: var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+
 .wrap {
   display: flex;
   align-items: center;
   gap: var(--s5);
-  padding-bottom: var(--s5);
-  border-bottom: 1px solid var(--line);
 }
 
 .wrap p {
@@ -29,6 +35,10 @@
 }
 
 @media (max-width: 640px) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
   .wrap {
     flex-direction: column;
     align-items: flex-start;

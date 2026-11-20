@@ -17,6 +17,9 @@ import { AthleteAppShowcase } from "./features/athleteApp/AthleteAppShowcase"
 import { DebugPage, NotFoundPage } from "./features/debug/DebugPage"
 
 const CameraPage = lazy(() => import("./features/camera/CameraPage"))
+const CameraNodePage = lazy(() =>
+  import("./features/cameraNode/CameraNodePage").then((module) => ({ default: module.CameraNodePage })),
+)
 
 export default function App() {
   return (
@@ -33,6 +36,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--night)" }} />}>
                     <CameraPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/camera"
+                element={
+                  <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--night)" }} />}>
+                    <CameraNodePage />
                   </Suspense>
                 }
               />

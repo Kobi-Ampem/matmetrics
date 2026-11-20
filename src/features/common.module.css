@@ -1673,3 +1673,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Live page: keyboard hints on the left, camera source switch on the right. */
+.camHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  /* Dark controls, the same token swap the dark top bar uses. */
+  --ink: var(--night-ink);
+  --ink-2: var(--night-ink-2);
+  --ink-3: var(--night-ink-2);
+  --line: var(--night-line);
+  --line-strong: #323a48;
+  --bg: var(--night-2);
+  --surface: var(--night-2);
+  --hover: #1d2430;
+}
+
+.camHead .hint span {
+  white-space: nowrap;
+}
+
+.camHead > div {
+  flex: none;
+  margin: var(--s3) var(--s5) 0 0;
+}

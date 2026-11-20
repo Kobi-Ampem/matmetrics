@@ -16,6 +16,10 @@ const LINKS: [number, number][] = [
   [14, 16],
 ]
 
+// Real camera keypoints the model cannot see arrive as NaN and are left out.
+const shown = (point?: [number, number]): point is [number, number] =>
+  point !== undefined && !Number.isNaN(point[0])
+
 function Figure({ points, color, hot }: { points: [number, number][]; color: string; hot: boolean }) {
   if (points.length === 0) return null
   const nose = points[0] ?? [0, 0]
@@ -24,7 +28,7 @@ function Figure({ points, color, hot }: { points: [number, number][]; color: str
       {LINKS.map(([a, b]) => {
         const p = points[a]
         const q = points[b]
-        if (!p || !q) return null
+        if (!shown(p) || !shown(q)) return null
         return (
           <line
             key={`${a}-${b}`}
@@ -38,10 +42,12 @@ function Figure({ points, color, hot }: { points: [number, number][]; color: str
           />
         )
       })}
-      <circle cx={nose[0]} cy={nose[1]} r={10} fill="none" stroke={hot ? theme.riskHigh : color} strokeWidth={2} />
-      {points.map((point, index) => (
-        <circle key={index} cx={point[0]} cy={point[1]} r={2.5} fill={hot ? theme.riskHigh : color} />
-      ))}
+      {shown(nose) ? (
+        <circle cx={nose[0]} cy={nose[1]} r={10} fill="none" stroke={hot ? theme.riskHigh : color} strokeWidth={2} />
+      ) : null}
+      {points.map((point, index) =>
+        shown(point) ? <circle key={index} cx={point[0]} cy={point[1]} r={2.5} fill={hot ? theme.riskHigh : color} /> : null,
+      )}
     </g>
   )
 }

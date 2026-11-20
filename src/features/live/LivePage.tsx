@@ -15,13 +15,18 @@ import { athleteById, mockDb } from "../../data"
 import { POSES } from "../../data/poses"
 import { blockTitle } from "../../data/liveScript"
 import { useLiveSession } from "../../state/LiveSessionContext"
+import { useEdge } from "../../state/EdgeContext"
 import { formatVideoTime } from "../../utils/format"
 import type { Camera, Flag } from "../../types"
 import { poseAt, usePoseClock } from "./poseClock"
+import { RealCameraFrame } from "./RealCameraFrame"
 import styles from "../common.module.css"
 
 export function LivePage() {
   const { state, dispatch } = useLiveSession()
+  const { status: edgeStatus, watchCameras } = useEdge()
+  // Real cameras need the edge server; without it the scripted views are the only option.
+  const real = edgeStatus === "online" && state.cameraMode === "real"
   const [filter, setFilter] = useState("all")
   const [enlarged, setEnlarged] = useState<Camera["id"] | null>(null)
   const [open, setOpen] = useState<Flag | null>(null)
@@ -30,6 +35,12 @@ export function LivePage() {
     const blocked = camera.id === "cam4" && state.elapsedSec >= 50 * 60 && state.elapsedSec < 54 * 60
     return { ...camera, status: blocked ? "warning" as const : camera.id === "cam4" ? "online" as const : camera.status }
   })
+
+  useEffect(() => {
+    if (!real) return
+    watchCameras(true)
+    return () => watchCameras(false)
+  }, [real, watchCameras])
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -57,6 +68,23 @@ export function LivePage() {
     return true
   })
   const big = enlarged ? cameras.find((camera) => camera.id === enlarged) : null
+
+  function cameraView(camera: Camera, options: { size?: "strip"; offset?: number; onClick: () => void }) {
+    if (real) {
+      return <RealCameraFrame key={camera.id} camera={camera} flag={flagOn(camera.id, state)} size={options.size} onClick={options.onClick} />
+    }
+    return (
+      <CameraFrame
+        key={camera.id}
+        camera={camera}
+        pose={frameFor(camera.id, time + (options.offset ?? 0), state.activeFlags)}
+        flag={flagOn(camera.id, state)}
+        size={options.size}
+        status={camera.status}
+        onClick={options.onClick}
+      />
+    )
+  }
 
   return (
     <AppShell theme="dark">
@@ -93,34 +121,40 @@ export function LivePage() {
       />
       <div className={styles.grid2}>
         <div>
-          <p className={styles.hint}>
-            <span><kbd>Space</kbd>pause</span>
-            <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>speed</span>
-            <span><kbd>F</kbd>enlarge flagged camera</span>
-          </p>
+          <div className={styles.camHead}>
+            <p className={styles.hint}>
+              <span><kbd>Space</kbd>pause</span>
+              <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>speed</span>
+              <span><kbd>F</kbd>enlarge flagged camera</span>
+            </p>
+            {edgeStatus === "online" ? (
+              <SegmentedControl
+                label="Camera source"
+                value={state.cameraMode}
+                onChange={(mode) => dispatch({ type: "SET_CAMERA_MODE", mode })}
+                options={[
+                  { id: "simulated", label: "Simulated" },
+                  { id: "real", label: "Real cameras" },
+                ]}
+              />
+            ) : null}
+          </div>
           {big ? (
             <>
               <div className={styles.cams} style={{ gridTemplateColumns: "1fr" }}>
-                <CameraFrame camera={big} pose={frameFor(big.id, time, state.activeFlags)} flag={flagOn(big.id, state)} onClick={() => setEnlarged(null)} status={big.status} />
+                {cameraView(big, { onClick: () => setEnlarged(null) })}
               </div>
               <div className={`${styles.strip} ${styles.liveStrip}`}>
-                {cameras.filter((camera) => camera.id !== big.id).map((camera) => (
-                  <CameraFrame key={camera.id} camera={camera} pose={frameFor(camera.id, time, state.activeFlags)} flag={flagOn(camera.id, state)} size="strip" status={camera.status} onClick={() => setEnlarged(camera.id)} />
-                ))}
+                {cameras
+                  .filter((camera) => camera.id !== big.id)
+                  .map((camera) => cameraView(camera, { size: "strip", onClick: () => setEnlarged(camera.id) }))}
               </div>
             </>
           ) : (
             <div className={styles.cams}>
-              {cameras.map((camera, index) => (
-                <CameraFrame
-                  key={camera.id}
-                  camera={camera}
-                  pose={frameFor(camera.id, time + index * 0.4, state.activeFlags)}
-                  flag={flagOn(camera.id, state)}
-                  status={camera.status}
-                  onClick={() => setEnlarged(camera.id)}
-                />
-              ))}
+              {cameras.map((camera, index) =>
+                cameraView(camera, { offset: index * 0.4, onClick: () => setEnlarged(camera.id) }),
+              )}
             </div>
           )}
           <div className={styles.railHead}>

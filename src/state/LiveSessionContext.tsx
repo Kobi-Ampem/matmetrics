@@ -52,6 +52,8 @@ interface LiveState {
   latencyMs: number
   // Matches the edge server's reset counter, so a reset on one screen restarts every screen.
   epoch: number
+  // "real" shows the camera phones around the mat instead of the scripted camera views.
+  cameraMode: "simulated" | "real"
 }
 
 // Larger jumps happen when a screen joins late or the edge clock catches up; they skip the
@@ -66,6 +68,8 @@ type Action =
   | { type: "MARK_SEEN"; id: string }
   | { type: "RESET" }
   | { type: "SYNC"; live: EdgeLive; now: number }
+  | { type: "SET_CAMERA_MODE"; mode: LiveState["cameraMode"] }
+  | { type: "REAL_ALERTS"; alerts: Flag[]; now: number }
 
 function hrTarget(elapsedSec: number, resting: number, max: number): number {
   const minute = elapsedSec / 60
@@ -131,6 +135,7 @@ function createInitial(): LiveState {
     pulsedPairs: [],
     latencyMs: 1400,
     epoch: 0,
+    cameraMode: "simulated",
   }
 }
 
@@ -219,13 +224,37 @@ function reducer(state: LiveState, action: Action): LiveState {
       const restarted = live.epoch !== state.epoch || live.elapsedSec < state.elapsedSec
       const base = restarted ? { ...createInitial(), epoch: live.epoch } : state
       const moved = live.elapsedSec > base.elapsedSec ? advance(base, live.elapsedSec, now) : base
+      // Real camera alerts are not in the script, so a replay from the start would drop them.
+      // Keep the ones from the server's current session (their ids carry its reset counter).
+      const real = restarted ? state.alerts.filter((alert) => alert.id.startsWith(`real-${live.epoch}-`)) : []
       return {
         ...moved,
+        alerts: [...real, ...moved.alerts],
         running: live.running,
         ended: live.ended,
         speed: live.speed,
         seen: Object.fromEntries(live.seen.map((id) => [id, true])),
+        cameraMode: live.cameraMode,
       }
+    }
+    case "SET_CAMERA_MODE":
+      return { ...state, cameraMode: action.mode }
+    case "REAL_ALERTS": {
+      const { now } = action
+      let alerts = state.alerts
+      let activeFlags = state.activeFlags.filter((item) => item.untilMs > now)
+      // Oldest first, so the newest ends up at the top of the stream.
+      for (const alert of [...action.alerts].reverse()) {
+        const existing = alerts.find((item) => item.id === alert.id)
+        if (existing && existing.cameras.length === alert.cameras.length) continue
+        alerts = existing ? alerts.map((item) => (item.id === alert.id ? alert : item)) : [alert, ...alerts]
+        // New alert, or another camera saw the same fall: box the cameras for six seconds.
+        activeFlags = [
+          ...activeFlags.filter((item) => item.flagId !== alert.id),
+          { flagId: alert.id, cameras: alert.cameras, untilMs: now + 6000, athleteId: alert.athleteId },
+        ]
+      }
+      return alerts === state.alerts ? state : { ...state, alerts, activeFlags }
     }
     default:
       return state
@@ -238,13 +267,17 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, createInitial)
   const location = useLocation()
   const liveRoute = location.pathname === "/coach/live" || location.pathname === "/coach"
-  const { status, live, send } = useEdge()
+  const { status, live, realAlerts, send } = useEdge()
   const online = status === "online"
 
   // With an edge server, its clock drives every screen. Without one, this tab keeps its own.
   useEffect(() => {
     if (live) dispatch({ type: "SYNC", live, now: Date.now() })
   }, [live])
+
+  useEffect(() => {
+    if (realAlerts.length) dispatch({ type: "REAL_ALERTS", alerts: realAlerts, now: Date.now() })
+  }, [realAlerts])
 
   useEffect(() => {
     if (online || !liveRoute || !state.running || state.ended) return
@@ -261,6 +294,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       if (action.type === "TOGGLE_RUNNING") send("POST", "/api/live/toggle")
       else if (action.type === "SET_SPEED") send("POST", "/api/live/speed", { speed: action.speed })
       else if (action.type === "END") send("POST", "/api/live/end")
+      else if (action.type === "SET_CAMERA_MODE") send("POST", "/api/live/cameras", { mode: action.mode })
       else if (action.type === "MARK_SEEN") send("POST", `/api/live/seen/${encodeURIComponent(action.id)}`)
     },
     [online, send],

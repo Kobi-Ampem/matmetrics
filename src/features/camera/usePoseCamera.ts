@@ -7,9 +7,23 @@ export type CameraStatus = "idle" | "loading" | "running" | "denied" | "unsuppor
 
 // Must match the installed @mediapipe/tasks-vision version, or the WASM and JS glue disagree.
 const TASKS_VISION_VERSION = "1.2.3"
-const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+
+export interface PoseAssets {
+  wasm: string
+  model: string
+}
+
+export const CDN_ASSETS: PoseAssets = {
+  wasm: `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`,
+  model:
+    "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+}
+
+// The edge server hosts the same files, so pages it serves work with no internet.
+export const EDGE_ASSETS: PoseAssets = {
+  wasm: "/mediapipe/wasm",
+  model: "/mediapipe/pose_landmarker_lite.task",
+}
 const SMOOTHING = 0.5
 const EMPTY: PoseFrame = { a: [], b: [] }
 
@@ -17,12 +31,12 @@ function isSupported() {
   return typeof window !== "undefined" && window.isSecureContext && !!navigator.mediaDevices?.getUserMedia
 }
 
-async function createLandmarker(): Promise<PoseLandmarker> {
+export async function createLandmarker(assets: PoseAssets): Promise<PoseLandmarker> {
   const { FilesetResolver, PoseLandmarker } = await import("@mediapipe/tasks-vision")
-  const fileset = await FilesetResolver.forVisionTasks(WASM_URL)
+  const fileset = await FilesetResolver.forVisionTasks(assets.wasm)
   const build = (delegate: "GPU" | "CPU") =>
     PoseLandmarker.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: MODEL_URL, delegate },
+      baseOptions: { modelAssetPath: assets.model, delegate },
       runningMode: "VIDEO",
       numPoses: 2,
     })
@@ -33,7 +47,7 @@ async function createLandmarker(): Promise<PoseLandmarker> {
   }
 }
 
-export function usePoseCamera() {
+export function usePoseCamera(assets: PoseAssets = CDN_ASSETS) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const landmarkerRef = useRef<PoseLandmarker | null>(null)
@@ -90,7 +104,7 @@ export function usePoseCamera() {
       video.srcObject = stream
       await video.play()
 
-      const landmarker = await createLandmarker()
+      const landmarker = await createLandmarker(assets)
       if (session !== sessionRef.current) {
         landmarker.close()
         return
@@ -136,7 +150,7 @@ export function usePoseCamera() {
       const name = error instanceof DOMException ? error.name : ""
       setStatus(name === "NotAllowedError" || name === "SecurityError" ? "denied" : "error")
     }
-  }, [release])
+  }, [release, assets])
 
   useEffect(() => release, [release])
 
