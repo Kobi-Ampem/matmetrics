@@ -30,3 +30,5 @@ server/*.db
 __pycache__
 .pytest_cache
 .ruff_cache
+server/certs
+server/models

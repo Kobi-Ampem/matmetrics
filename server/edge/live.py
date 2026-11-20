@@ -13,6 +13,7 @@ LIVE_START_SEC = 57 * 60 + 20
 SESSION_LENGTH_SEC = 90 * 60
 
 Speed = Literal[1, 4, 16]
+CameraMode = Literal["simulated", "real"]
 
 
 @dataclass
@@ -22,6 +23,8 @@ class LiveClock:
     ended: bool = False
     speed: Speed = 1
     seen: set[str] = field(default_factory=set)
+    # "real" swaps the scripted camera views for the phones on tripods around the mat.
+    camera_mode: CameraMode = "simulated"
     # Bumped on every reset so screens can tell "the clock went back" from "a stale message".
     epoch: int = 0
 
@@ -46,6 +49,9 @@ class LiveClock:
         self.running = False
         self.ended = True
 
+    def set_camera_mode(self, mode: CameraMode) -> None:
+        self.camera_mode = mode
+
     def mark_seen(self, alert_id: str) -> None:
         self.seen.add(alert_id)
 
@@ -62,4 +68,5 @@ class LiveClock:
             "speed": self.speed,
             "seen": sorted(self.seen),
             "epoch": self.epoch,
+            "cameraMode": self.camera_mode,
         }
