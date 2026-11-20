@@ -23,3 +23,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Edge server (Python)
+server/.venv
+server/*.db
+__pycache__
+.pytest_cache
+.ruff_cache

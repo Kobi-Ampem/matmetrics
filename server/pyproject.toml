@@ -1,0 +1,26 @@
+[project]
+name = "matmetrics-edge"
+version = "0.1.0"
+description = "MatMetrics edge server: the club's local box that syncs coach and athlete screens"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "segno>=1.6",
+]
+
+[project.scripts]
+matmetrics-edge = "edge.__main__:main"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.27",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
