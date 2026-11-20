@@ -17,6 +17,7 @@ const LINKS: [number, number][] = [
 ]
 
 function Figure({ points, color, hot }: { points: [number, number][]; color: string; hot: boolean }) {
+  if (points.length === 0) return null
   const nose = points[0] ?? [0, 0]
   return (
     <g>

@@ -1493,6 +1493,109 @@
   padding: var(--s6) 0;
 }
 
+/* ---------- live camera ---------- */
+
+.camStage {
+  padding: var(--s4) var(--s4) var(--s4) var(--s6);
+}
+
+.camFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--night);
+  border: 1px solid var(--night-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--night-ink);
+}
+
+.camVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.camVideoOn {
+  opacity: 0.45;
+}
+
+.camGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 33.33% 33.33%;
+}
+
+.camPose {
+  position: absolute;
+  inset: 0;
+}
+
+.camMessage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s6);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--night-ink-2);
+  max-width: 52ch;
+  margin: 0 auto;
+}
+
+.camPanel {
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  flex: 1;
+}
+
+.camReadout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--night-line);
+  border-bottom: 1px solid var(--night-line);
+  margin: 0;
+}
+
+.camReadout > div {
+  padding: var(--s3) 0;
+}
+
+.camReadout > div + div {
+  border-left: 1px solid var(--night-line);
+  padding-left: var(--s3);
+}
+
+.camReadout dt {
+  font-size: 11px;
+  color: var(--night-ink-2);
+}
+
+.camReadout dd {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: var(--night-ink);
+}
+
+.camNote {
+  font-size: var(--fs-sm);
+  color: var(--night-ink-2);
+  line-height: 1.5;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1679px) {
@@ -1529,6 +1632,7 @@
   }
 
   .cams,
+  .camStage,
   .liveStrip,
   .hint,
   .railHead {

@@ -15,6 +15,7 @@ import styles from "../common.module.css"
 const ROUTES = [
   ["/coach", "Dashboard", "Today's team, load and alerts"],
   ["/coach/live", "Live session", "Four cameras, alerts and vitals"],
+  ["/coach/camera", "Live camera", "Your webcam as stick figures"],
   ["/coach/reviews", "Reviews", "12 weeks of session rows"],
   ["/coach/reviews/s2026-11-17/a01", "Jack's review", "17 Nov session, shoulder landings"],
   ["/coach/athletes", "Athletes", "Roster and 12-week trend"],

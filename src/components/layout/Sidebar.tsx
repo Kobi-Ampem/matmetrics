@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom"
-import { Cpu, Dumbbell, Film, LayoutDashboard, Radio, Shield, Users } from "lucide-react"
+import { Camera, Cpu, Dumbbell, Film, LayoutDashboard, Radio, Shield, Users } from "lucide-react"
 import clsx from "clsx"
 import { useSettings } from "../../state/SettingsContext"
 import { useLiveSession } from "../../state/LiveSessionContext"
@@ -9,6 +9,7 @@ import styles from "./Sidebar.module.css"
 const NAV = [
   { to: "/coach", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/coach/live", label: "Live session", icon: Radio, end: false },
+  { to: "/coach/camera", label: "Live camera", icon: Camera, end: false },
   { to: "/coach/reviews", label: "Reviews", icon: Film, end: false },
   { to: "/coach/athletes", label: "Athletes", icon: Users, end: false },
   { to: "/coach/warmups", label: "Warm-ups", icon: Dumbbell, end: false },
